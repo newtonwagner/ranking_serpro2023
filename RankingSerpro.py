@@ -13,20 +13,25 @@ from PyPDF2 import PdfReader
 headers = {'User-Agent': 'Mozilla/5.0 (X11; Windows; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36'}
 
 #%% Prova Objetiva
-url = 'https://cdn.cebraspe.org.br/concursos/SERPRO_23/arquivos/ED_3_SERPRO_RES_FIN_OBJ_CONV_PRAT.PDF'
-response = requests.get(url=url, headers=headers, timeout=120)
-on_fly_mem_obj = io.BytesIO(response.content)
-pdf_file = PdfReader(on_fly_mem_obj)
-
-file_content = ''
-
-for page_num in range(pdf_file.numPages):
-    page = pdf_file.pages[page_num]
-    page_content = page.extract_text().replace('\n', '')
-    file_content = file_content + re.sub('^...', '', page_content)
-
-file_content = re.sub('\.  2 DA PROVA DE CONHECIMENTOS.*', ' /', file_content)
-
+try:
+    url = 'https://cdn.cebraspe.org.br/concursos/SERPRO_23/arquivos/ED_3_SERPRO_RES_FIN_OBJ_CONV_PRAT.PDF'
+    response = requests.get(url=url, headers=headers, timeout=120)
+    response.raise_for_status()  # Raise an exception for HTTP errors (status codes 4xx and 5xx)
+    on_fly_mem_obj = io.BytesIO(response.content)
+    pdf_file = PdfReader(on_fly_mem_obj)
+    
+    page_contents = []
+    for page_num in range(pdf_file.numPages):
+        page = pdf_file.pages[page_num]
+        page_content = page.extract_text().replace('\n', '')
+        page_contents.append(re.sub('^...', '', page_content))
+    
+    file_content = ' '.join(page_contents)
+    file_content = re.sub('\.  2 DA PROVA DE CONHECIMENTOS.*', ' /', file_content)
+except requests.exceptions.RequestException as e:
+    print("Error during HTTP request:", e)
+except Exception as e:
+    print("An unexpected error occurred:", e)
 
 #%% Manipula os candidatos
 
